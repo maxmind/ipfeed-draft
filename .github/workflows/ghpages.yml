@@ -1,0 +1,121 @@
+name: "Update Editor's Copy"
+
+on:
+  push:
+    paths-ignore:
+      - README.md
+      - CONTRIBUTING.md
+      - LICENSE.md
+      - .gitignore
+  pull_request:
+    paths-ignore:
+      - README.md
+      - CONTRIBUTING.md
+      - LICENSE.md
+      - .gitignore
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "Build Drafts"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
+
+      - name: "Setup"
+        id: setup
+        run: date -u "+date=%FT%T" >>"$GITHUB_OUTPUT"
+
+      - name: "Caching"
+        uses: actions/cache@v5
+        with:
+          path: |
+            .refcache
+            .venv
+            .gems
+            node_modules
+            .targets.mk
+          key: i-d-${{ steps.setup.outputs.date }}
+          restore-keys: i-d-
+
+      - name: "Build Drafts"
+        id: build
+        uses: martinthomson/i-d-template@v1
+        with:
+          token: ${{ github.token }}
+
+      - name: "Fix Lints"
+        id: fix-lint
+        if: always() && steps.build.outcome == 'failure'
+        uses: martinthomson/i-d-template@v1
+        with:
+          make: fix-lint
+
+      - name: "Propose Linting Fixes"
+        if: >
+          always() &&
+          steps.fix-lint.outcome != 'skipped' &&
+          github.event.pull_request &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: parkerbxyz/suggest-changes@v3
+        with:
+          token: ${{ github.token }}
+
+      - name: "Prepare Pages"
+        if: github.event_name == 'push'
+        env:
+          GH_REPO_OWNER: ${{ github.repository_owner }}
+          GH_REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          mkdir -p _site
+          cp -f draft-*.html draft-*.txt _site/ 2>/dev/null || true
+          cp -f lib/template/issues.html lib/template/issues.js _site/ 2>/dev/null || true
+          # Generate index.html using the i-d-template's build-index script
+          default_branch="$(git rev-parse --abbrev-ref HEAD)"
+          lib/build-index.sh html . "$default_branch" github.com \
+            "$GH_REPO_OWNER" "$GH_REPO_NAME" \
+            $(ls draft-*.md draft-*.xml 2>/dev/null) \
+            > _site/index.html
+
+      - name: "Configure Pages"
+        if: github.event_name == 'push'
+        uses: actions/configure-pages@v5
+
+      - name: "Upload Pages Artifact"
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: "Archive Built Drafts"
+        uses: actions/upload-artifact@v6
+        with:
+          name: drafts
+          path: |
+            draft-*.html
+            draft-*.txt
+
+  deploy:
+    name: "Deploy to GitHub Pages"
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: "Deploy to GitHub Pages"
+        id: deployment
+        uses: actions/deploy-pages@v5
