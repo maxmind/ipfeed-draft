@@ -1,0 +1,16 @@
+# Build outputs
+*.html
+*.pdf
+*.txt
+!requirements.txt
+*.xml
+
+# Editor/IDE
+*.swp
+*~
+.tags
+/.vscode/
+/.idea/
+
+# Reference cache (rebuilt by xml2rfc)
+/.refcache

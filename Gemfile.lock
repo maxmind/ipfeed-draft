@@ -1,0 +1,60 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    base64 (0.3.0)
+    connection_pool (3.0.2)
+    differ (0.1.2)
+    json_pure (2.8.1)
+    kramdown (2.4.0)
+      rexml
+    kramdown-parser-gfm (1.1.0)
+      kramdown (~> 2.0)
+    kramdown-rfc (1.7.35)
+      kramdown-rfc2629 (= 1.7.35)
+    kramdown-rfc2629 (1.7.35)
+      base64 (~> 0.2)
+      differ (~> 0.1)
+      json_pure (~> 2.0)
+      kramdown (~> 2.4.0)
+      kramdown-parser-gfm (~> 1.1)
+      net-http-persistent (~> 4.0)
+      ostruct (~> 0.6)
+      unicode-blocks (~> 1.0)
+      unicode-name (~> 1.0)
+      unicode-scripts (~> 1.0)
+    net-http-persistent (4.0.8)
+      connection_pool (>= 2.2.4, < 4)
+    ostruct (0.6.3)
+    rexml (3.4.4)
+    unicode-blocks (1.11.0)
+    unicode-name (1.14.0)
+      unicode-types (~> 1.11)
+    unicode-scripts (1.12.0)
+    unicode-types (1.11.0)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  kramdown-rfc
+
+CHECKSUMS
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
+  connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
+  differ (0.1.2) sha256=5ece6db723679a2a9861d252852ad614f1e921e32e0984b37aab70ecc3595e45
+  json_pure (2.8.1) sha256=6a877929ba9d4fa0808ccc38656d1b15d138b2aa0aa32037ee05abea13427ace
+  kramdown (2.4.0) sha256=b62e5bcbd6ea20c7a6730ebbb2a107237856e14f29cebf5b10c876cc1a2481c5
+  kramdown-parser-gfm (1.1.0) sha256=fb39745516427d2988543bf01fc4cf0ab1149476382393e0e9c48592f6581729
+  kramdown-rfc (1.7.35) sha256=0343399f17b5b12705dc32253c96e5970379bbbe5f26c582f24bf7557c89835f
+  kramdown-rfc2629 (1.7.35) sha256=6521ce1d3b431eb7b351fe0b06e8713807e297a25ad02dc8e5b18fc1f7e2a96e
+  net-http-persistent (4.0.8) sha256=ef3de8319d691537b329053fae3a33195f8b070bbbfae8bf1a58c796081960e6
+  ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
+  rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
+  unicode-blocks (1.11.0) sha256=80b8b11076aa9eaad4b070c37476403e5332252fb24321ffb6ff441ddf87dbb1
+  unicode-name (1.14.0) sha256=b350dcdeb503748c8ad05c472e8078570fbf3231a73be53431c15db10bbedbdd
+  unicode-scripts (1.12.0) sha256=67a4cf3e68dc1d20826ae744b155271822ff6b0baea4a52b94db0a9823322fb9
+  unicode-types (1.11.0) sha256=81d1201273260fa89b85471e7eebb93a51bb4e5f078a525508dcae7835d176f9
+
+BUNDLED WITH
+  4.0.10

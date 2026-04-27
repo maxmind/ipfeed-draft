@@ -1,0 +1,121 @@
+name: "Update Editor's Copy"
+
+on:
+  push:
+    paths-ignore:
+      - README.md
+      - CONTRIBUTING.md
+      - LICENSE.md
+      - .gitignore
+  pull_request:
+    paths-ignore:
+      - README.md
+      - CONTRIBUTING.md
+      - LICENSE.md
+      - .gitignore
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "Build Drafts"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: "Setup Ruby"
+        uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1.300.0
+        with:
+          ruby-version: ruby
+          bundler-cache: true
+
+      - name: "Setup Python"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.x"
+
+      - name: "Install xml2rfc"
+        run: pip install xml2rfc
+
+      - name: "Cache xml2rfc References"
+        uses: actions/cache@6682284cc58b73e9e0655991c2e8e82e47791b2a # v5.0.4
+        with:
+          path: .refcache
+          key: refcache-${{ hashFiles('draft-*.md') }}
+          restore-keys: refcache-
+
+      - name: "Build Drafts"
+        run: make
+
+      - name: "Prepare Pages"
+        if: github.event_name == 'push'
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p _site
+          cp -f draft-*.html draft-*.txt _site/
+          # Generate a simple index page
+          cat > _site/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>ipfeed Internet-Draft</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 600px; margin: 4em auto; padding: 0 1em; }
+              a { color: #2a6496; }
+              h1 { font-size: 1.4em; }
+              ul { line-height: 2; }
+            </style>
+          </head>
+          <body>
+            <h1>ipfeed: Self-Published IP Network Metadata Format</h1>
+            <ul>
+          EOF
+          for f in draft-*.html; do
+            base="${f%.html}"
+            echo "    <li><a href=\"$f\">${base}</a> (<a href=\"${base}.txt\">txt</a>)</li>" >> _site/index.html
+          done
+          cat >> _site/index.html <<EOF
+            </ul>
+            <p><a href="https://github.com/${GH_REPO}">Source repository</a> ·
+               <a href="https://github.com/${GH_REPO}/issues">Issues</a></p>
+          </body>
+          </html>
+          EOF
+
+      - name: "Configure Pages"
+        if: github.event_name == 'push'
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        with:
+          enablement: true
+
+      - name: "Upload Pages Artifact"
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: _site
+
+  deploy:
+    name: "Deploy to GitHub Pages"
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: "Deploy to GitHub Pages"
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
