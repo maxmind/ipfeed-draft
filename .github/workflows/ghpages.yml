@@ -46,7 +46,7 @@ jobs:
         run: pip install xml2rfc
 
       - name: "Cache xml2rfc References"
-        uses: actions/cache@6682284cc58b73e9e0655991c2e8e82e47791b2a # v5.0.4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: .refcache
           key: refcache-${{ hashFiles('draft-*.md') }}
