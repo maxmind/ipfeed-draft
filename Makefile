@@ -2,8 +2,14 @@ SHELL := /bin/bash
 .PHONY: all html txt clean
 .DELETE_ON_ERROR:
 
-# Tool configuration
-KRAMDOWN_RFC ?= kramdown-rfc
+# Tool configuration.
+# kramdown-rfc is a Ruby gem managed by Bundler, so we invoke it via
+# `bundle exec` to find the gem on the Bundler load path. This lets plain
+# `make` work both locally and in CI (where ruby/setup-ruby installs gems
+# under a Bundler-managed location that is not on PATH for sub-shells).
+# Override via e.g. `KRAMDOWN_RFC=kramdown-rfc make` if invoking globally
+# installed binaries directly.
+KRAMDOWN_RFC ?= bundle exec kramdown-rfc
 XML2RFC      ?= xml2rfc
 
 # Discover drafts
