@@ -2,12 +2,16 @@ name: "Update Editor's Copy"
 
 on:
   push:
+    branches-ignore:
+      - gh-pages
     paths-ignore:
       - README.md
       - CONTRIBUTING.md
       - LICENSE.md
       - .gitignore
   pull_request:
+    branches-ignore:
+      - gh-pages
     paths-ignore:
       - README.md
       - CONTRIBUTING.md
@@ -25,8 +29,7 @@ jobs:
     name: "Build Drafts"
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pages: write
+      contents: write
     steps:
       - name: "Checkout"
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -62,6 +65,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -f draft-*.html draft-*.txt _site/
+          touch _site/.nojekyll
           # Generate a simple index page
           cat > _site/index.html <<EOF
           <!DOCTYPE html>
@@ -92,30 +96,9 @@ jobs:
           </html>
           EOF
 
-      - name: "Configure Pages"
+      - name: "Publish to gh-pages"
         if: github.event_name == 'push'
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
-          enablement: true
-
-      - name: "Upload Pages Artifact"
-        if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        with:
-          path: _site
-
-  deploy:
-    name: "Deploy to GitHub Pages"
-    if: github.event_name == 'push'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: "Deploy to GitHub Pages"
-        id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
