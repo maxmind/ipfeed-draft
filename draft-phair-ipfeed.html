@@ -1,0 +1,2973 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>ipfeed: Self-Published IP Network Metadata Format</title>
+<meta content="Kevin Phair" name="author">
+<meta content="
+       This document defines ipfeed, a CSV-based format for self-publishing IP
+network metadata. Network operators, cloud providers, enterprises, and
+other IP address space managers use ipfeed to publish structured
+information about their IP prefixes --- including location, network
+classification, and arbitrary custom data. 
+       ipfeed extends the RFC 8805 geofeed format with a metadata line, an
+explicit column header, richer field support, and null semantics. Where
+geofeeds provide five fixed columns of location data, ipfeed allows
+producers to publish any combination of common and custom fields while
+retaining the simplicity and universal tooling support of CSV. 
+    " name="description">
+<meta content="xml2rfc 3.33.0" name="generator">
+<meta content="geolocation" name="keyword">
+<meta content="geofeed" name="keyword">
+<meta content="IP metadata" name="keyword">
+<meta content="CSV" name="keyword">
+<meta content="self-published" name="keyword">
+<meta content="draft-phair-ipfeed-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.33.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.0
+    platformdirs 4.9.6
+    pycountry 26.2.16
+    PyYAML 6.0.3
+    requests 2.34.2
+    wcwidth 0.7.0
+-->
+<link href="draft-phair-ipfeed.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">/*
+
+  NOTE: Changes at the bottom of this file overrides some earlier settings.
+
+  Once the style has stabilized and has been adopted as an official RFC style,
+  this can be consolidated so that style settings occur only in one place, but
+  for now the contents of this file consists first of the initial CSS work as
+  provided to the RFC Formatter (xml2rfc) work, followed by itemized and
+  commented changes found necessary during the development of the v3
+  formatters.
+
+*/
+
+/* fonts */
+@import url('https://static.ietf.org/fonts/noto-sans/import.css'); /* Sans-serif */
+@import url('https://static.ietf.org/fonts/noto-serif/import.css'); /* Serif (print) */
+@import url('https://static.ietf.org/fonts/roboto-mono/import.css'); /* Monospace */
+
+:root {
+  --font-sans: 'Noto Sans', Arial, Helvetica, sans-serif;
+  --font-serif: 'Noto Serif', 'Times', 'Times New Roman', serif;
+  --font-mono: 'Roboto Mono', Courier, 'Courier New', monospace;
+}
+
+@viewport {
+  zoom: 1.0;
+}
+@-ms-viewport {
+  width: extend-to-zoom;
+  zoom: 1.0;
+}
+/* general and mobile first */
+html {
+}
+body {
+  max-width: 90%;
+  margin: 1.5em auto;
+  color: #222;
+  background-color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  overflow-wrap: break-word;
+}
+.ears {
+  display: none;
+}
+
+/* headings */
+#title, h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+  line-height: 1.3;
+}
+#title {
+  clear: both;
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 0.5em 0;
+  padding: 1em 0 0.5em;
+}
+.author {
+  padding-bottom: 4px;
+}
+h1 {
+  font-size: 26px;
+  margin: 1em 0;
+}
+h2 {
+  font-size: 22px;
+  margin-top: -20px;  /* provide offset for in-page anchors */
+  padding-top: 33px;
+}
+h3 {
+  font-size: 18px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h4 {
+  font-size: 16px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h5, h6 {
+  font-size: 14px;
+}
+#n-copyright-notice {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+/* general structure */
+p {
+  padding: 0;
+  margin: 0 0 1em 0;
+  text-align: left;
+}
+div, span {
+  position: relative;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+@media print {
+  svg {
+    max-height: 850px;
+    max-width: 660px;
+  }
+}
+svg[font-family~="serif" i], svg [font-family~="serif" i] {
+  font-family: var(--font-serif);
+}
+svg[font-family~="sans-serif" i], svg [font-family~="sans-serif" i] {
+  font-family: var(--font-sans);
+}
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  display: table;
+  border: none;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 1em 2em;
+}
+ol ol, ul ul, ol ul, ul ol {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+ul.ulBare, li.ulBare {
+  margin-left: 0em !important;
+}
+ul.compact, .ulCompact,
+ol.compact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+}
+/* 
+dl.nohang > dt {
+  float: none;
+}
+*/
+dl > dd {
+  margin-bottom: .8em;
+  min-height: 1.3em;
+}
+dl.compact > dd, .dlCompact > dd {
+  margin-bottom: 0em;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0em;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+a[href] {
+  color: #22e; /* Arlen: WCAG 2019 */
+}
+a[href]:hover {
+  background-color: #f2f2f2;
+}
+figcaption a[href],
+a[href].selfRef {
+  color: #222;
+}
+/* XXX probably not this:
+a.selfRef:hover {
+  background-color: transparent;
+  cursor: default;
+} */
+
+/* Figures */
+tt, code, pre {
+  background-color: #f9f9f9;
+  font-family: var(--font-mono);
+}
+pre {
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption {
+  font-style: italic;
+  margin: 0 0 1em 0;
+}
+@media screen {
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    max-width: calc(100% - 22px);
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 1.2em 2em;
+}
+blockquote {
+  background-color: #f9f9f9;
+  color: #111; /* Arlen: WCAG 2019 */
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+.xref {
+  overflow-wrap: normal;
+}
+
+/* tables */
+table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em;
+}
+th {
+  text-align: left;
+  background-color: #e9e9e9;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f5f5f5;
+}
+table caption {
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+table p {
+  /* XXX to avoid bottom margin on table row signifiers. If paragraphs should
+     be allowed within tables more generally, it would be far better to select on a class. */
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  color: #666; /* Arlen: AHDJ 2019 */
+  text-decoration: none;
+  visibility: hidden;
+  user-select: none;
+  -ms-user-select: none;
+  -o-user-select:none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media screen {
+  aside:hover > a.pilcrow,
+  p:hover > a.pilcrow,
+  blockquote:hover > a.pilcrow,
+  div:hover > a.pilcrow,
+  li:hover > a.pilcrow,
+  pre:hover > a.pilcrow {
+    visibility: visible;
+  }
+  a.pilcrow:hover {
+    background-color: transparent;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.bcp14 {
+  font-variant: small-caps;
+}
+
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: 0.9em;
+}
+#identifiers dt {
+  width: 3em;
+  clear: left;
+}
+#identifiers dd {
+  float: left;
+  margin-bottom: 0;
+}
+/* Fix PDF info block run off issue */
+@media print {
+  #identifiers dd {
+    max-width: 100%;
+  }
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #666; /* Arlen: WCAG 2019 */
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc  {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+nav.toc ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+nav.toc li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dd {
+  margin-left: 8em;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.refSubseries {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+.index ul {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+.index ul ul {
+  margin: 0;
+}
+.index li {
+  margin: 0;
+  text-indent: -2em;
+  padding-left: 2em;
+  padding-bottom: 5px;
+}
+.indexIndex {
+  margin: 0.5em 0 1em;
+}
+.index a {
+  font-weight: 700;
+}
+/* make the index two-column on all but the smallest screens */
+@media (min-width: 600px) {
+  .index ul {
+    -moz-column-count: 2;
+    -moz-column-gap: 20px;
+  }
+  .index ul ul {
+    -moz-column-count: 1;
+    -moz-column-gap: 0;
+  }
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  font-family: var(--font-sans);
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+
+/* temporary notes */
+.rfcEditorRemove::before {
+  position: absolute;
+  top: 0.2em;
+  right: 0.2em;
+  padding: 0.2em;
+  content: "The RFC Editor will remove this note";
+  color: #9e2a00; /* Arlen: WCAG 2019 */
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+}
+.rfcEditorRemove {
+  position: relative;
+  padding-top: 1.8em;
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  border-radius: 3px;
+}
+.cref {
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 1023px) {
+  body {
+    padding-top: 2em;
+  }
+  #title {
+    padding: 1em 0;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: -18px;  /* provide offset for in-page anchors */
+    padding-top: 38px;
+  }
+  #identifiers dd {
+    max-width: 60%;
+  }
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ccc;
+  }
+  #toc h2 {
+    margin: -1px 0 0 0;
+    padding: 4px 0 4px 6px;
+    padding-right: 1em;
+    min-width: 190px;
+    font-size: 1.1em;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 6px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 1024px) {
+  body {
+    max-width: 724px;
+    margin: 42px auto;
+    padding-left: 1.5em;
+    padding-right: 29em;
+  }
+  #toc {
+    position: fixed;
+    top: 42px;
+    right: 42px;
+    width: 25%;
+    margin: 0;
+    padding: 0 1em;
+    z-index: 1;
+  }
+  #toc h2 {
+    border-top: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 0;
+    overflow: auto;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  .breakable pre {
+    break-inside: auto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+/* This is commented out here, as the string-set: doesn't
+   pass W3C validation currently */
+/*
+.ears thead .left {
+  string-set: ears-top-left content();
+}
+
+.ears thead .center {
+  string-set: ears-top-center content();
+}
+
+.ears thead .right {
+  string-set: ears-top-right content();
+}
+
+.ears tfoot .left {
+  string-set: ears-bottom-left content();
+}
+
+.ears tfoot .center {
+  string-set: ears-bottom-center content();
+}
+
+.ears tfoot .right {
+  string-set: ears-bottom-right content();
+}
+*/
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+  /* The following is commented out here, but set appropriately by in code, as
+     the content depends on the document */
+  /*
+  @top-left {
+    content: 'Internet-Draft';
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-left {
+    content: string(ears-top-left);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-center {
+    content: string(ears-top-center);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-right {
+    content: string(ears-top-right);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @bottom-left {
+    content: string(ears-bottom-left);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-center {
+    content: string(ears-bottom-center);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-right {
+      content: '[Page ' counter(page) ']';
+      vertical-align: top;
+      border-top: solid 1px #ccc;
+  }
+  */
+
+}
+
+/* Changes introduced to fix issues found during implementation */
+/* Make sure links are clickable even if overlapped by following H* */
+a {
+  z-index: 2;
+}
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Leave room in document info to show Internet-Draft on one line */
+#identifiers dt {
+  width: 8em;
+}
+
+/* Don't waste quite as much whitespace between label and value in doc info */
+#identifiers dd {
+  margin-left: 1em;
+}
+
+/* Give floating toc a background color (needed when it's a div inside section */
+#toc {
+  background-color: white;
+}
+
+/* Make the collapsed ToC header render white on gray also when it's a link */
+@media screen and (max-width: 1023px) {
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+}
+
+/* Give the bottom of the ToC some whitespace */
+@media screen and (min-width: 1024px) {
+  #toc {
+    padding: 0 0 1em 1em;
+  }
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* prevent monospace from becoming overly large */
+tt, code, pre {
+  font-size: 95%;
+}
+
+/* Fix the height/width aspect for ascii art*/
+.sourcecode pre,
+.art-text pre {
+  line-height: 1.12;
+}
+
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin-right: 0.5em;
+}
+
+/* Fix the dl styling to match the RFC 7992 attributes */
+dl > dt,
+dl.dlParallel > dt {
+  float: left;
+  margin-right: 1em;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+
+/* Provide styling for table cell text alignment */
+table td.text-left,
+table th.text-left {
+  text-align: left;
+}
+table td.text-center,
+table th.text-center {
+  text-align: center;
+}
+table td.text-right,
+table th.text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 30em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Provide table alignment support.  We can't use the alignX classes above
+   since they do unwanted things with caption and other styling. */
+table.right {
+ margin-left: auto;
+ margin-right: 0;
+}
+table.center {
+ margin-left: auto;
+ margin-right: auto;
+}
+table.left {
+ margin-left: 0;
+ margin-right: auto;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+caption a[href] {
+  color: #222;
+}
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+/* Tweak the bcp14 keyword presentation */
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+/* Tweak the invisible space above H* in order not to overlay links in text above */
+ h2 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 31px;
+ }
+ h3 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+ h4 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+/* Float artwork pilcrow to the right */
+@media screen {
+  .artwork a.pilcrow {
+    display: block;
+    line-height: 0.7;
+    margin-top: 0.15em;
+  }
+}
+/* Make pilcrows on dd visible */
+@media screen {
+  dd:hover > a.pilcrow {
+    visibility: visible;
+  }
+}
+/* Make the placement of figcaption match that of a table's caption
+   by removing the figure's added bottom margin */
+.alignLeft.art-text,
+.alignCenter.art-text,
+.alignRight.art-text {
+   margin-bottom: 0;
+}
+.alignLeft,
+.alignCenter,
+.alignRight {
+  margin: 1em 0 0 0;
+}
+/* In print, the pilcrow won't show on hover, so prevent it from taking up space,
+   possibly even requiring a new line */
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+/* Styling for the external metadata */
+div#external-metadata {
+  background-color: #eee;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  display: none;
+}
+div#internal-metadata {
+  padding: 0.5em;                       /* to match the external-metadata padding */
+}
+/* Styling for title RFC Number */
+h1#rfcnum {
+  clear: both;
+  margin: 0 0 -1em;
+  padding: 1em 0 0 0;
+}
+/* Make .olPercent look the same as <ol><li> */
+dl.olPercent > dd {
+  margin-bottom: 0.25em;
+  min-height: initial;
+}
+/* Give aside some styling to set it apart */
+aside {
+  border-left: 1px solid #ddd;
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 2em;
+}
+aside > dl,
+aside > ol,
+aside > ul,
+aside > table,
+aside > p {
+  margin-bottom: 0.5em;
+}
+/* Additional page break settings */
+@media print {
+  figcaption, table caption {
+    page-break-before: avoid;
+  }
+}
+/* Font size adjustments for print */
+@media print {
+  body  { font-size: 10pt;      line-height: normal; max-width: 96%; }
+  h1    { font-size: 1.72em;    padding-top: 1.5em; } /* 1*1.2*1.2*1.2 */
+  h2    { font-size: 1.44em;    padding-top: 1.5em; } /* 1*1.2*1.2 */
+  h3    { font-size: 1.2em;     padding-top: 1.5em; } /* 1*1.2 */
+  h4    { font-size: 1em;       padding-top: 1.5em; }
+  h5, h6 { font-size: 1em;      margin: initial; padding: 0.5em 0 0.3em; }
+}
+/* Sourcecode margin in print, when there's no pilcrow */
+@media print {
+  .artwork,
+  .artwork > pre,
+  .sourcecode {
+    margin-bottom: 1em;
+  }
+}
+/* Avoid narrow tables forcing too narrow table captions, which may render badly */
+table {
+  min-width: 20em;
+}
+/* ol type a */
+ol.type-a { list-style-type: lower-alpha; }
+ol.type-A { list-style-type: upper-alpha; }
+ol.type-i { list-style-type: lower-roman; }
+ol.type-I { list-style-type: upper-roman; }
+/* Apply the print table and row borders in general, on request from the RPC,
+and increase the contrast between border and odd row background slightly */
+table {
+  border: 1px solid #ddd;
+}
+td {
+  border-top: 1px solid #ddd;
+}
+tr {
+  break-inside: avoid;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f8f8f8;
+}
+/* Use style rules to govern display of the TOC. */
+@media screen and (max-width: 1023px) {
+  #toc nav { display: none; }
+  #toc.active nav { display: block; }
+}
+/* Add support for keepWithNext */
+.keepWithNext {
+  break-after: avoid-page;
+  break-after: avoid-page;
+}
+/* Add support for keepWithPrevious */
+.keepWithPrevious {
+  break-before: avoid-page;
+}
+/* Change the approach to avoiding breaks inside artwork etc. */
+figure, pre, table, .artwork, .sourcecode  {
+  break-before: auto;
+  break-after: auto;
+}
+/* Avoid breaks between <dt> and <dd> */
+dl {
+  break-before: auto;
+  break-inside: auto;
+}
+dt {
+  break-before: auto;
+  break-after: avoid-page;
+}
+dd {
+  break-before: avoid-page;
+  break-after: auto;
+  orphans: 3;
+  widows: 3
+}
+span.break, dd.break {
+  margin-bottom: 0;
+  min-height: 0;
+  break-before: auto;
+  break-inside: auto;
+  break-after: auto;
+}
+/* Undo break-before ToC */
+@media print {
+  #toc {
+    break-before: auto;
+  }
+}
+/* Text in compact lists should not get extra bottom margin space,
+   since that would makes the list not compact */
+ul.compact p, .ulCompact p,
+ol.compact p, .olCompact p {
+ margin: 0;
+}
+/* But the list as a whole needs the extra space at the end */
+section ul.compact,
+section .ulCompact,
+section ol.compact,
+section .olCompact {
+  margin-bottom: 1em;                    /* same as p not within ul.compact etc. */
+}
+/* The tt and code background above interferes with for instance table cell
+   backgrounds.  Changed to something a bit more selective. */
+tt, code {
+  background-color: transparent;
+}
+p tt, p code, li tt, li code, dt tt, dt code {
+  background-color: #f8f8f8;
+}
+/* Tweak the pre margin -- 0px doesn't come out well */
+pre {
+   margin-top: 0.5px;
+}
+/* Tweak the compact list text */
+ul.compact, .ulCompact,
+ol.compact, .olCompact,
+dl.compact, .dlCompact {
+  line-height: normal;
+}
+/* Don't add top margin for nested lists */
+li > ul, li > ol, li > dl,
+dd > ul, dd > ol, dd > dl,
+dl > dd > dl {
+  margin-top: initial;
+}
+/* Elements that should not be rendered on the same line as a <dt> */
+/* This should match the element list in writer.text.TextWriter.render_dl() */
+dd > div.artwork:first-child,
+dd > aside:first-child,
+dd > blockquote:first-child,
+dd > figure:first-child,
+dd > ol:first-child,
+dd > div.sourcecode:first-child,
+dd > table:first-child,
+dd > ul:first-child {
+  clear: left;
+}
+/* fix for weird browser behaviour when <dd/> is empty */
+dt+dd:empty::before{
+  content: "\00a0";
+}
+/* Make paragraph spacing inside <li> smaller than in body text, to fit better within the list */
+li > p {
+  margin-bottom: 0.5em
+}
+/* Don't let p margin spill out from inside list items */
+li > p:last-of-type:only-child {
+  margin-bottom: 0;
+}
+</style>
+<link href="rfc-local.css" rel="stylesheet" type="text/css">
+<script type="application/javascript">async function addMetadata(){try{const e=document.styleSheets[0].cssRules;for(let t=0;t<e.length;t++)if(/#identifiers/.exec(e[t].selectorText)){const a=e[t].cssText.replace("#identifiers","#external-updates");document.styleSheets[0].insertRule(a,document.styleSheets[0].cssRules.length)}}catch(e){console.log(e)}const e=document.getElementById("external-metadata");if(e)try{var t,a="",o=function(e){const t=document.getElementsByTagName("meta");for(let a=0;a<t.length;a++)if(t[a].getAttribute("name")===e)return t[a].getAttribute("content");return""}("rfc.number");if(o){t="https://www.rfc-editor.org/rfc/rfc"+o+".json";try{const e=await fetch(t);a=await e.json()}catch(e){t=document.URL.indexOf("html")>=0?document.URL.replace(/html$/,"json"):document.URL+".json";const o=await fetch(t);a=await o.json()}}if(!a)return;e.style.display="block";const s="",d="https://datatracker.ietf.org/doc",n="https://datatracker.ietf.org/ipr/search",c="https://www.rfc-editor.org/info",l=a.doc_id.toLowerCase(),i=a.doc_id.slice(0,3).toLowerCase(),f=a.doc_id.slice(3).replace(/^0+/,""),u={status:"Status",obsoletes:"Obsoletes",obsoleted_by:"Obsoleted By",updates:"Updates",updated_by:"Updated By",see_also:"See Also",errata_url:"Errata"};let h="<dl style='overflow:hidden' id='external-updates'>";["status","obsoletes","obsoleted_by","updates","updated_by","see_also","errata_url"].forEach(e=>{if("status"==e){a[e]=a[e].toLowerCase();var t=a[e].split(" "),o=t.length,w="",p=1;for(let e=0;e<o;e++)p<o?w=w+r(t[e])+" ":w+=r(t[e]),p++;a[e]=w}else if("obsoletes"==e||"obsoleted_by"==e||"updates"==e||"updated_by"==e){var g,m="",b=1;g=a[e].length;for(let t=0;t<g;t++)a[e][t]&&(a[e][t]=String(a[e][t]).toLowerCase(),m=b<g?m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>, ":m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>",b++);a[e]=m}else if("see_also"==e){var y,L="",C=1;y=a[e].length;for(let t=0;t<y;t++)if(a[e][t]){a[e][t]=String(a[e][t]);var _=a[e][t].slice(0,3),v=a[e][t].slice(3).replace(/^0+/,"");L=C<y?"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>, ":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>, ":"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>",C++}a[e]=L}else if("errata_url"==e){var R="";R=a[e]?R+"<a href='"+a[e]+"'>Errata exist</a> | <a href='"+d+"/"+l+"'>Datatracker</a>| <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>":"<a href='"+d+"/"+l+"'>Datatracker</a> | <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>",a[e]=R}""!=a[e]?"Errata"==u[e]?h+=`<dt>More info:</dt><dd>${a[e]}</dd>`:h+=`<dt>${u[e]}:</dt><dd>${a[e]}</dd>`:"Errata"==u[e]&&(h+=`<dt>More info:</dt><dd>${a[e]}</dd>`)}),h+="</dl>",e.innerHTML=h}catch(e){console.log(e)}else console.log("Could not locate metadata <div> element");function r(e){return e.charAt(0).toUpperCase()+e.slice(1)}}window.removeEventListener("load",addMetadata),window.addEventListener("load",addMetadata);</script>
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">ipfeed</td>
+<td class="right">May 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Phair</td>
+<td class="center">Expires 19 November 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-phair-ipfeed-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-05-18" class="published">18 May 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-11-19">19 November 2026</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">K. Phair</div>
+<div class="org">MaxMind</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">ipfeed: Self-Published IP Network Metadata Format</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document defines ipfeed, a CSV-based format for self-publishing IP
+network metadata. Network operators, cloud providers, enterprises, and
+other IP address space managers use ipfeed to publish structured
+information about their IP prefixes --- including location, network
+classification, and arbitrary custom data.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">ipfeed extends the RFC 8805 geofeed format with a metadata line, an
+explicit column header, richer field support, and null semantics. Where
+geofeeds provide five fixed columns of location data, ipfeed allows
+producers to publish any combination of common and custom fields while
+retaining the simplicity and universal tooling support of CSV.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 19 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-design-goals" class="internal xref">Design Goals</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-relationship-to-rfc-8805" class="internal xref">Relationship to RFC 8805</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-file-format" class="internal xref">File Format</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-encoding" class="internal xref">Encoding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-structure" class="internal xref">Structure</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-metadata-line" class="internal xref">Metadata Line</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.1">
+                    <p id="section-toc.1-1.3.2.3.2.1.1"><a href="#section-3.3.1" class="auto internal xref">3.3.1</a>.  <a href="#name-syntax" class="internal xref">Syntax</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.2">
+                    <p id="section-toc.1-1.3.2.3.2.2.1"><a href="#section-3.3.2" class="auto internal xref">3.3.2</a>.  <a href="#name-metadata-fields" class="internal xref">Metadata Fields</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.3">
+                    <p id="section-toc.1-1.3.2.3.2.3.1"><a href="#section-3.3.3" class="auto internal xref">3.3.3</a>.  <a href="#name-version-compatibility" class="internal xref">Version Compatibility</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.4">
+                    <p id="section-toc.1-1.3.2.3.2.4.1"><a href="#section-3.3.4" class="auto internal xref">3.3.4</a>.  <a href="#name-generated-timestamp-semanti" class="internal xref"><code>generated</code> Timestamp Semantics</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-column-header" class="internal xref">Column Header</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5">
+                <p id="section-toc.1-1.3.2.5.1"><a href="#section-3.5" class="auto internal xref">3.5</a>.  <a href="#name-data-rows" class="internal xref">Data Rows</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.6">
+                <p id="section-toc.1-1.3.2.6.1"><a href="#section-3.6" class="auto internal xref">3.6</a>.  <a href="#name-ordering" class="internal xref">Ordering</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.7">
+                <p id="section-toc.1-1.3.2.7.1"><a href="#section-3.7" class="auto internal xref">3.7</a>.  <a href="#name-overlapping-prefixes" class="internal xref">Overlapping Prefixes</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-common-fields" class="internal xref">Common Fields</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-location-fields" class="internal xref">Location Fields</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-network-classification-fiel" class="internal xref">Network Classification Fields</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-data-quality-fields" class="internal xref">Data Quality Fields</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-registered-user_type-values" class="internal xref">Registered <code>user_type</code> Values</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-registered-connection_type-" class="internal xref">Registered <code>connection_type</code> Values</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6">
+                <p id="section-toc.1-1.4.2.6.1"><a href="#section-4.6" class="auto internal xref">4.6</a>.  <a href="#name-column-naming-conventions" class="internal xref">Column Naming Conventions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-null-semantics" class="internal xref">Null Semantics</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-examples" class="internal xref">Examples</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-guidance" class="internal xref">Guidance</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-extension-mechanism" class="internal xref">Extension Mechanism</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-declaring-extension-fields" class="internal xref">Declaring Extension Fields</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-naming-conventions" class="internal xref">Naming Conventions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-examples-2" class="internal xref">Examples</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-geofeed-conversion" class="internal xref">Geofeed Conversion</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-field-mapping" class="internal xref">Field Mapping</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-conversion-rules" class="internal xref">Conversion Rules</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-example" class="internal xref">Example</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-publication-and-discovery" class="internal xref">Publication and Discovery</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-file-extension" class="internal xref">File Extension</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-media-type" class="internal xref">Media Type</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-discovery" class="internal xref">Discovery</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-operational-considerations" class="internal xref">Operational Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-file-size" class="internal xref">File Size</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-refresh-cadence" class="internal xref">Refresh Cadence</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-http-caching" class="internal xref">HTTP Caching</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-transport" class="internal xref">Transport</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref">12.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
+                <p id="section-toc.1-1.12.2.2.1"><a href="#section-12.2" class="auto internal xref">12.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-examples-3" class="internal xref">Examples</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
+                <p id="section-toc.1-1.13.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-minimal-feed" class="internal xref">Minimal Feed</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-cloud-provider-feed" class="internal xref">Cloud Provider Feed</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3">
+                <p id="section-toc.1-1.13.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-isp-with-connection-type-an" class="internal xref">ISP with Connection Type and User Type</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
+                <p id="section-toc.1-1.13.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-enterprise-network" class="internal xref">Enterprise Network</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.5">
+                <p id="section-toc.1-1.13.2.5.1"><a href="#appendix-A.5" class="auto internal xref">A.5</a>.  <a href="#name-retraction-usage" class="internal xref">Retraction Usage</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">ipfeed is a CSV-based format for self-publishing IP network metadata.
+Network operators, cloud providers, enterprises, and other IP address
+space managers use ipfeed to publish structured information about their
+IP prefixes --- including location, network classification, and
+arbitrary custom data.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">ipfeed extends the RFC 8805 geofeed format <span>[<a href="#RFC8805" class="cite xref">RFC8805</a>]</span> with a metadata
+line, an explicit column header, richer field support, and null
+semantics. Where geofeeds provide five fixed columns of location data,
+ipfeed allows producers to publish any combination of common and custom
+fields while retaining the simplicity and universal tooling support of
+CSV.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<div id="design-goals">
+<section id="section-1.1">
+        <h3 id="name-design-goals">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-design-goals" class="section-name selfRef">Design Goals</a>
+        </h3>
+<span class="break"></span><dl class="dlParallel" id="section-1.1-1">
+          <dt id="section-1.1-1.1">Simplicity:</dt>
+          <dd style="margin-left: 1.5em" id="section-1.1-1.2">
+            <p id="section-1.1-1.2.1">CSV is supported everywhere --- spreadsheets, command-line tools,
+scripting languages, and databases can all read and write it without
+special libraries.<a href="#section-1.1-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-1.1-1.3">Data richness:</dt>
+          <dd style="margin-left: 1.5em" id="section-1.1-1.4">
+            <p id="section-1.1-1.4.1">Producers can publish any metadata they have about their prefixes, not
+just location.<a href="#section-1.1-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-1.1-1.5">Extensibility:</dt>
+          <dd style="margin-left: 1.5em" id="section-1.1-1.6">
+            <p id="section-1.1-1.6.1">Producers add columns freely. Consumers ignore what they don't
+recognize. No coordination required to extend.<a href="#section-1.1-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-1.1-1.7">Familiarity:</dt>
+          <dd style="margin-left: 1.5em" id="section-1.1-1.8">
+            <p id="section-1.1-1.8.1">Existing geofeed publishers already work with CSV. An ipfeed looks and
+feels like a geofeed with more columns.<a href="#section-1.1-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="relationship-to-rfc-8805">
+<section id="section-1.2">
+        <h3 id="name-relationship-to-rfc-8805">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-relationship-to-rfc-8805" class="section-name selfRef">Relationship to RFC 8805</a>
+        </h3>
+<p id="section-1.2-1">ipfeed is an evolution of RFC 8805 geofeeds <span>[<a href="#RFC8805" class="cite xref">RFC8805</a>]</span>. It adds the
+structure that geofeeds lack --- metadata, explicit column headers,
+extensibility, and null semantics --- while keeping the CSV simplicity
+that made geofeeds successful.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Feature</th>
+              <th class="text-left" rowspan="1" colspan="1">RFC 8805 Geofeed</th>
+              <th class="text-left" rowspan="1" colspan="1">ipfeed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Format</td>
+              <td class="text-left" rowspan="1" colspan="1">CSV (5 fixed columns)</td>
+              <td class="text-left" rowspan="1" colspan="1">CSV (flexible columns)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Column header</td>
+              <td class="text-left" rowspan="1" colspan="1">None (implicit)</td>
+              <td class="text-left" rowspan="1" colspan="1">Explicit (line 2)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Metadata</td>
+              <td class="text-left" rowspan="1" colspan="1">Comment lines</td>
+              <td class="text-left" rowspan="1" colspan="1">Structured metadata line</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Data scope</td>
+              <td class="text-left" rowspan="1" colspan="1">Location only</td>
+              <td class="text-left" rowspan="1" colspan="1">Any IP metadata</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Extensibility</td>
+              <td class="text-left" rowspan="1" colspan="1">None</td>
+              <td class="text-left" rowspan="1" colspan="1">Custom columns</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Null semantics</td>
+              <td class="text-left" rowspan="1" colspan="1">Empty = no data</td>
+              <td class="text-left" rowspan="1" colspan="1">Empty = no data, <code>\N</code> = retraction</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Library requirements</td>
+              <td class="text-left" rowspan="1" colspan="1">CSV parser</td>
+              <td class="text-left" rowspan="1" colspan="1">CSV parser</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-1.2-3">Existing geofeeds can be upgraded to ipfeed by prepending a metadata
+line and a column header (see <a href="#geofeed-conversion" class="auto internal xref">Section 7</a>). Other efforts to
+extend the geofeed ecosystem include <span>[<a href="#I-D.ietf-opsawg-prefix-lengths" class="cite xref">I-D.ietf-opsawg-prefix-lengths</a>]</span>,
+which defines a companion format for publishing expected prefix lengths.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="terminology">
+<section id="section-2">
+      <h2 id="name-terminology">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-2">
+        <dt id="section-2-2.1">Producer:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.2">
+          <p id="section-2-2.2.1">An entity that creates and publishes an ipfeed file.<a href="#section-2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.3">Consumer:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.4">
+          <p id="section-2-2.4.1">An entity that retrieves and processes an ipfeed file.<a href="#section-2-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.5">Metadata line:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.6">
+          <p id="section-2-2.6.1">The first line of an ipfeed file, a <code>#</code>-prefixed line containing the
+<code>ipfeed_version</code> key and other key-value pairs that describe the feed.<a href="#section-2-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.7">Comment line:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.8">
+          <p id="section-2-2.8.1">A <code>#</code>-prefixed line that is not the metadata line. Comment lines carry
+no structured semantics and may appear anywhere in the file.<a href="#section-2-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.9">Column header:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.10">
+          <p id="section-2-2.10.1">The first non-blank, non-comment line after the metadata line, listing
+the field names for all subsequent data rows.<a href="#section-2-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.11">Data row:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.12">
+          <p id="section-2-2.12.1">A non-blank, non-comment CSV row after the column header, containing
+metadata for a single network prefix.<a href="#section-2-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.13">Common field:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.14">
+          <p id="section-2-2.14.1">A field name with defined semantics in this specification
+(<a href="#common-fields" class="auto internal xref">Section 4</a>). Also referred to as a "well-known field."<a href="#section-2-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.15">Extension field:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.16">
+          <p id="section-2-2.16.1">A field name not defined in this specification, added by a producer
+for their own purposes.<a href="#section-2-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="file-format">
+<section id="section-3">
+      <h2 id="name-file-format">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-file-format" class="section-name selfRef">File Format</a>
+      </h2>
+<div id="encoding">
+<section id="section-3.1">
+        <h3 id="name-encoding">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-encoding" class="section-name selfRef">Encoding</a>
+        </h3>
+<p id="section-3.1-1">An ipfeed file <span class="bcp14">MUST</span> be encoded in UTF-8. A UTF-8 byte order mark (BOM,
+U+FEFF) at the start of the file is <span class="bcp14">OPTIONAL</span>; consumers <span class="bcp14">MUST</span> accept
+files with or without a BOM. Data rows <span class="bcp14">MUST</span> conform to <span>[<a href="#RFC4180" class="cite xref">RFC4180</a>]</span>
+(Common Format and MIME Type for Comma-Separated Values). Lines <span class="bcp14">MUST</span> be
+terminated by a newline character (LF, U+000A) or a carriage return
+followed by a newline (CRLF, U+000D U+000A).<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="structure">
+<section id="section-3.2">
+        <h3 id="name-structure">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-structure" class="section-name selfRef">Structure</a>
+        </h3>
+<p id="section-3.2-1">An ipfeed file consists of the following parts, in order:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3.2-2">
+<li id="section-3.2-2.1">
+            <p id="section-3.2-2.1.1"><strong>Metadata line</strong> (<span class="bcp14">REQUIRED</span>) --- the first line of the file<a href="#section-3.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.2-2.2">
+            <p id="section-3.2-2.2.1"><strong>Column header</strong> (<span class="bcp14">REQUIRED</span>) --- the first non-blank, non-comment
+line after the metadata line<a href="#section-3.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.2-2.3">
+            <p id="section-3.2-2.3.1"><strong>Data rows</strong> --- zero or more CSV rows<a href="#section-3.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-3.2-3">Comment lines (beginning with <code>#</code>) and blank lines <span class="bcp14">MAY</span> appear anywhere
+after the metadata line. Consumers <span class="bcp14">MUST</span> skip comment lines and blank
+lines when processing. The metadata line is distinguished from other
+comment lines by containing the <code>ipfeed_version</code> key (see
+<a href="#metadata-line" class="auto internal xref">Section 3.3</a>).<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="metadata-line">
+<section id="section-3.3">
+        <h3 id="name-metadata-line">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-metadata-line" class="section-name selfRef">Metadata Line</a>
+        </h3>
+<p id="section-3.3-1">The metadata line <span class="bcp14">MUST</span> be the first line of the file (or the first line
+after a UTF-8 BOM, if present). It <span class="bcp14">MUST</span> begin with the <code>#</code> character,
+followed by a space, followed by one or more semicolon-separated
+<code>key=value</code> pairs. It is identified by the presence of the
+<code>ipfeed_version</code> key.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-2">
+<pre>
+# ipfeed_version=1; publisher=AS64496; publisher_name=Example ISP; generated=2026-02-11T00:00:00Z
+</pre><a href="#section-3.3-2" class="pilcrow">¶</a>
+</div>
+<div id="syntax">
+<section id="section-3.3.1">
+          <h4 id="name-syntax">
+<a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-syntax" class="section-name selfRef">Syntax</a>
+          </h4>
+<div class="lang-abnf sourcecode" id="section-3.3.1-1">
+<pre>
+metadata_line  = "#" SP pair *( ";" SP pair )
+pair           = key "=" value
+key            = 1*( ALPHA / DIGIT / "_" )
+value          = plain_value / quoted_value
+plain_value    = *( any character except ";" and "=" and DQUOTE )
+quoted_value   = DQUOTE *( any character / DQUOTE DQUOTE ) DQUOTE
+</pre><a href="#section-3.3.1-1" class="pilcrow">¶</a>
+</div>
+<p id="section-3.3.1-2">Values that contain semicolons (<code>;</code>), equals signs (<code>=</code>), or double
+quotes (<code>"</code>) <span class="bcp14">MUST</span> be enclosed in double quotes. Within a quoted value, a
+literal double quote is represented as two consecutive double quotes
+(<code>""</code>), following <span>[<a href="#RFC4180" class="cite xref">RFC4180</a>]</span> quoting conventions.<a href="#section-3.3.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-3">Leading and trailing whitespace in values <span class="bcp14">SHOULD</span> be trimmed by consumers
+unless the value is quoted.<a href="#section-3.3.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="metadata-fields">
+<section id="section-3.3.2">
+          <h4 id="name-metadata-fields">
+<a href="#section-3.3.2" class="section-number selfRef">3.3.2. </a><a href="#name-metadata-fields" class="section-name selfRef">Metadata Fields</a>
+          </h4>
+<table class="center" id="table-2">
+            <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Field</th>
+                <th class="text-left" rowspan="1" colspan="1">Required</th>
+                <th class="text-left" rowspan="1" colspan="1">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>ipfeed_version</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <span class="bcp14">REQUIRED</span>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Format version. <span class="bcp14">MUST</span> be <code>1</code> for this specification. See <a href="#version-compatibility" class="auto internal xref">Section 3.3.3</a>.</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>publisher</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <span class="bcp14">RECOMMENDED</span>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Publisher identifier (e.g., ASN like <code>AS64496</code>, domain, or organization name).</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>publisher_name</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <span class="bcp14">OPTIONAL</span>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Human-readable name of the publisher.</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>generated</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <span class="bcp14">RECOMMENDED</span>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">ISO 8601 timestamp indicating when this file was generated. See <a href="#generated-semantics" class="auto internal xref">Section 3.3.4</a>.</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>contact_email</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <span class="bcp14">OPTIONAL</span>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Contact email address for the publisher.</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>url</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <span class="bcp14">OPTIONAL</span>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Canonical URL where this ipfeed is published.</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-3.3.2-2">Consumers <span class="bcp14">MUST</span> ignore unrecognized metadata keys.<a href="#section-3.3.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="version-compatibility">
+<section id="section-3.3.3">
+          <h4 id="name-version-compatibility">
+<a href="#section-3.3.3" class="section-number selfRef">3.3.3. </a><a href="#name-version-compatibility" class="section-name selfRef">Version Compatibility</a>
+          </h4>
+<p id="section-3.3.3-1">The <code>ipfeed_version</code> field carries a single positive integer. Each
+integer value is defined by a distinct specification document; this
+document defines <code>ipfeed_version=1</code>. Because every version is its own
+published document, version increments are expected to be rare and to
+correspond to changes substantial enough to warrant a new RFC.<a href="#section-3.3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.3-2">Producers <span class="bcp14">MUST</span> set <code>ipfeed_version</code> to the integer value of the
+specification they actually implement, never to a higher value they
+merely intend to support.<a href="#section-3.3.3-2" class="pilcrow">¶</a></p>
+<p id="section-3.3.3-3">Consumers behave as follows on encountering an <code>ipfeed_version</code> value:<a href="#section-3.3.3-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.3.3-4.1">
+              <p id="section-3.3.3-4.1.1">If the value matches a version the consumer implements, the consumer
+<span class="bcp14">MUST</span> process the file according to that version's rules. Unknown
+common fields and unknown registered values for fields such as
+<code>user_type</code> or <code>connection_type</code> <span class="bcp14">MUST</span> be treated as unrecognized
+extension fields per <a href="#extension-mechanism" class="auto internal xref">Section 6</a>; this is the mechanism
+by which a single version of the specification accommodates evolving
+vocabulary.<a href="#section-3.3.3-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.3-4.2">
+              <p id="section-3.3.3-4.2.1">If the value is greater than any version the consumer implements,
+the consumer <span class="bcp14">SHOULD</span> reject the file rather than attempt best-effort
+parsing, because the file's structural meaning is unspecified to it.<a href="#section-3.3.3-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.3-4.3">
+              <p id="section-3.3.3-4.3.1">If the value is lower than any version the consumer implements, the
+consumer <span class="bcp14">MAY</span> process the file using the older version's rules,
+provided the consumer still supports that version. Successor
+specifications will state explicitly whether and how they retain
+compatibility with files at lower <code>ipfeed_version</code> values.<a href="#section-3.3.3-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="generated-semantics">
+<section id="section-3.3.4">
+          <h4 id="name-generated-timestamp-semanti">
+<a href="#section-3.3.4" class="section-number selfRef">3.3.4. </a><a href="#name-generated-timestamp-semanti" class="section-name selfRef"><code>generated</code> Timestamp Semantics</a>
+          </h4>
+<p id="section-3.3.4-1">The <code>generated</code> field records the moment at which the producer serialized
+this particular file, not the freshness of the underlying data. Producers
+<span class="bcp14">SHOULD</span> update <code>generated</code> on every regenerated file --- including
+regenerations whose row content is unchanged --- so that consumers can
+distinguish "successfully refreshed, no changes" from "stale; the producer
+is no longer publishing."<a href="#section-3.3.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.4-2">Producers <span class="bcp14">MUST NOT</span> use <code>generated</code> to advertise data freshness in a way
+that contradicts the file's actual contents (e.g., setting it to a future
+time, or holding it constant across regenerations to imply the data is
+"current"). Consumers <span class="bcp14">MAY</span> use <code>generated</code> together with HTTP response
+metadata to detect a stalled producer, but <span class="bcp14">SHOULD NOT</span> treat a recent
+<code>generated</code> value as evidence that any individual row has been recently
+verified; per-row freshness is conveyed by <code>last_verified</code>
+(<a href="#common-fields" class="auto internal xref">Section 4</a>).<a href="#section-3.3.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="column-header">
+<section id="section-3.4">
+        <h3 id="name-column-header">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-column-header" class="section-name selfRef">Column Header</a>
+        </h3>
+<p id="section-3.4-1">The column header is the first non-blank, non-comment line after the
+metadata line. It is a comma-separated list of field names, one for each
+column in the subsequent data rows.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4-2">
+<pre>
+network,country,region,city,user_type,connection_type,is_anycast
+</pre><a href="#section-3.4-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.4-3">The column <code>network</code> <span class="bcp14">MUST</span> be present and <span class="bcp14">MUST</span> be the first column. All
+other columns are <span class="bcp14">OPTIONAL</span> and may appear in any order.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
+<p id="section-3.4-4">Column names <span class="bcp14">MUST</span> consist of lowercase ASCII letters, digits, and
+underscores. Column names <span class="bcp14">MUST NOT</span> be empty.<a href="#section-3.4-4" class="pilcrow">¶</a></p>
+<p id="section-3.4-5">Consumers <span class="bcp14">MUST</span> ignore columns whose names they do not recognize. This
+ensures forward compatibility --- producers can add new columns without
+breaking existing consumers.<a href="#section-3.4-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="data-rows">
+<section id="section-3.5">
+        <h3 id="name-data-rows">
+<a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-data-rows" class="section-name selfRef">Data Rows</a>
+        </h3>
+<p id="section-3.5-1">Each data row represents one network prefix. Fields are separated by
+commas, with quoting per <span>[<a href="#RFC4180" class="cite xref">RFC4180</a>]</span>. The number of fields in each data
+row <span class="bcp14">MUST</span> match the number of columns in the column header.<a href="#section-3.5-1" class="pilcrow">¶</a></p>
+<p id="section-3.5-2">The <code>network</code> field (first column) is <span class="bcp14">REQUIRED</span> in every data row. It
+<span class="bcp14">MUST</span> contain an IP address prefix in CIDR notation (e.g.,
+<code>203.0.113.0/24</code> or <code>2001:db8::/32</code>). Both IPv4 and IPv6 prefixes are
+supported.<a href="#section-3.5-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ordering">
+<section id="section-3.6">
+        <h3 id="name-ordering">
+<a href="#section-3.6" class="section-number selfRef">3.6. </a><a href="#name-ordering" class="section-name selfRef">Ordering</a>
+        </h3>
+<p id="section-3.6-1">Data rows <span class="bcp14">MAY</span> appear in any order. Consumers <span class="bcp14">MUST NOT</span> depend on the
+ordering of rows within a file.<a href="#section-3.6-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="overlapping-prefixes">
+<section id="section-3.7">
+        <h3 id="name-overlapping-prefixes">
+<a href="#section-3.7" class="section-number selfRef">3.7. </a><a href="#name-overlapping-prefixes" class="section-name selfRef">Overlapping Prefixes</a>
+        </h3>
+<p id="section-3.7-1">A file <span class="bcp14">MAY</span> contain overlapping prefixes (e.g., both <code>192.0.2.0/24</code> and
+<code>192.0.2.0/28</code>). When prefixes overlap, consumers <span class="bcp14">SHOULD</span> apply
+most-specific-match semantics (longest prefix match), consistent with IP
+routing conventions.<a href="#section-3.7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="common-fields">
+<section id="section-4">
+      <h2 id="name-common-fields">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-common-fields" class="section-name selfRef">Common Fields</a>
+      </h2>
+<p id="section-4-1">The following fields have defined semantics. Producers <span class="bcp14">SHOULD</span> use these
+field names when their data matches the described semantics, to maximize
+interoperability.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">All common fields are <span class="bcp14">OPTIONAL</span> --- a producer includes only the columns
+relevant to the data they have. The only required column is <code>network</code>.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<div id="location-fields">
+<section id="section-4.1">
+        <h3 id="name-location-fields">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-location-fields" class="section-name selfRef">Location Fields</a>
+        </h3>
+<table class="center" id="table-3">
+          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Field</th>
+              <th class="text-left" rowspan="1" colspan="1">Type</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>country</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">ISO 3166-1 alpha-2 country code (e.g., <code>US</code>, <code>DE</code>, <code>JP</code>).</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>region</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">ISO 3166-2 subdivision code (e.g., <code>US-CA</code>, <code>DE-BY</code>).</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>city</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">City, town, village, or other locality name in UTF-8.</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="network-classification-fields">
+<section id="section-4.2">
+        <h3 id="name-network-classification-fiel">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-network-classification-fiel" class="section-name selfRef">Network Classification Fields</a>
+        </h3>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Field</th>
+              <th class="text-left" rowspan="1" colspan="1">Type</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>isp</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">Internet Service Provider name.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>organization</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">Organization name associated with the prefix.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>user_type</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">How the network is used. See <a href="#registered-user_type-values" class="auto internal xref">Section 4.4</a> for registered values.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>connection_type</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">Physical connection technology. See <a href="#registered-connection_type-values" class="auto internal xref">Section 4.5</a> for registered values.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>domain</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">Domain name of the network operator.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>is_anycast</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">boolean</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>true</code> if the prefix is used for anycast routing.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>is_proxy</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">boolean</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>true</code> if the prefix is known to be used for proxy or VPN services.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>is_cgnat</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">boolean</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>true</code> if the prefix is behind Carrier-Grade NAT <span>[<a href="#RFC6888" class="cite xref">RFC6888</a>]</span>.</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="data-quality-fields">
+<section id="section-4.3">
+        <h3 id="name-data-quality-fields">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-data-quality-fields" class="section-name selfRef">Data Quality Fields</a>
+        </h3>
+<table class="center" id="table-5">
+          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Field</th>
+              <th class="text-left" rowspan="1" colspan="1">Type</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>confidence_value</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">number</td>
+              <td class="text-left" rowspan="1" colspan="1">Producer's confidence in this record, from <code>0</code> (no confidence) to <code>100</code> (fully confident).</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>last_verified</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">ISO 8601 timestamp indicating when this record was last verified by the producer.</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="registered-user_type-values">
+<section id="section-4.4">
+        <h3 id="name-registered-user_type-values">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-registered-user_type-values" class="section-name selfRef">Registered <code>user_type</code> Values</a>
+        </h3>
+<p id="section-4.4-1">The <code>user_type</code> field describes the logical use of a network --- who or
+what is using the address space.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-6">
+          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Value</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>residential</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Residential broadband users.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>business</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Business or commercial internet service.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>hosting</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Hosting, cloud, or data center infrastructure.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>cellular</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Mobile/cellular network users.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>enterprise</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Enterprise or corporate network.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>education</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Educational institution network.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>government</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Government network.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>satellite</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Satellite internet users.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>ai_agent</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Serving AI agent traffic.</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="registered-connection_type-values">
+<section id="section-4.5">
+        <h3 id="name-registered-connection_type-">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-registered-connection_type-" class="section-name selfRef">Registered <code>connection_type</code> Values</a>
+        </h3>
+<p id="section-4.5-1">The <code>connection_type</code> field describes the physical connection technology
+used to deliver network service.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-7">
+          <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Value</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>cable_dsl</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Cable modem or DSL connection.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>cellular</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Mobile/cellular radio connection.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>satellite</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Satellite link.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>fiber</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Fiber-optic connection.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>cellular_broadband</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Fixed wireless broadband using cellular technology.</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-4.5-3">Additional values <span class="bcp14">MAY</span> be defined in future versions of this
+specification.<a href="#section-4.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="column-naming-conventions">
+<section id="section-4.6">
+        <h3 id="name-column-naming-conventions">
+<a href="#section-4.6" class="section-number selfRef">4.6. </a><a href="#name-column-naming-conventions" class="section-name selfRef">Column Naming Conventions</a>
+        </h3>
+<p id="section-4.6-1">Field names follow conventions that indicate their data type:<a href="#section-4.6-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-8">
+          <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Convention</th>
+              <th class="text-left" rowspan="1" colspan="1">Type</th>
+              <th class="text-left" rowspan="1" colspan="1">Examples</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>is_*</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">boolean</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>is_anycast</code>, <code>is_proxy</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>*_value</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">number</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>confidence_value</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">All other names</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>country</code>, <code>city</code>, <code>user_type</code>
+</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-4.6-3">Boolean fields <span class="bcp14">MUST</span> use the lowercase values <code>true</code> or <code>false</code>. Producers
+<span class="bcp14">MUST NOT</span> use <code>True</code>, <code>TRUE</code>, <code>1</code>, <code>yes</code>, or any other casing or synonym.
+Consumers <span class="bcp14">MAY</span> accept other casings out of robustness, but <span class="bcp14">SHOULD</span> report
+non-conforming values to the publisher. An empty boolean field means the
+producer has no data (see <a href="#null-semantics" class="auto internal xref">Section 5</a>); a <code>\N</code> value is a positive
+retraction (see <a href="#null-semantics" class="auto internal xref">Section 5</a>).<a href="#section-4.6-3" class="pilcrow">¶</a></p>
+<p id="section-4.6-4">Numeric fields contain decimal numbers. An empty numeric field means the
+producer has no data (see <a href="#null-semantics" class="auto internal xref">Section 5</a>).<a href="#section-4.6-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="null-semantics">
+<section id="section-5">
+      <h2 id="name-null-semantics">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-null-semantics" class="section-name selfRef">Null Semantics</a>
+      </h2>
+<p id="section-5-1">CSV fields have three meaningful states:<a href="#section-5-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-9">
+        <caption><a href="#table-9" class="selfRef">Table 9</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">State</th>
+            <th class="text-left" rowspan="1" colspan="1">CSV representation</th>
+            <th class="text-left" rowspan="1" colspan="1">Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Value present</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>Auckland</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">The producer provides this value.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">No data</td>
+            <td class="text-left" rowspan="1" colspan="1">(empty: <code>,,</code>)</td>
+            <td class="text-left" rowspan="1" colspan="1">The producer has no data for this field. They didn't check, don't know, or it isn't applicable for this row.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Retraction</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>\N</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">The producer explicitly asserts that consumers should discard any existing data for this field.</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-5-3">The distinction between "no data" and "retraction" matters for consumers
+that merge data from multiple sources. When a field is empty, the
+consumer can fall back to other data sources. When a field contains <code>\N</code>,
+the producer is actively saying "this field should be blank" --- a
+positive assertion that overrides other sources.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<div id="examples">
+<section id="section-5.1">
+        <h3 id="name-examples">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-examples" class="section-name selfRef">Examples</a>
+        </h3>
+<div class="alignLeft art-text artwork" id="section-5.1-1">
+<pre>
+# ipfeed_version=1; publisher=AS64497
+network,country,region,city,connection_type
+203.0.113.0/24,NZ,,Auckland,fiber
+198.51.100.0/24,US,US-WY,\N,satellite
+</pre><a href="#section-5.1-1" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-2">In the first data row, <code>region</code> is empty --- the producer has no region
+data for this network, and consumers may use other sources.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+<p id="section-5.1-3">In the second data row, <code>city</code> is <code>\N</code> --- the producer has determined
+that there is no meaningful city for this satellite network and asserts
+that consumers should discard any city they might have from other
+sources.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="guidance">
+<section id="section-5.2">
+        <h3 id="name-guidance">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-guidance" class="section-name selfRef">Guidance</a>
+        </h3>
+<p id="section-5.2-1">Producers <span class="bcp14">SHOULD</span> use empty fields (no data) as the default when they
+lack information. The <code>\N</code> sentinel <span class="bcp14">SHOULD</span> be reserved for intentional
+retraction --- cases where the producer has checked and determined that
+no value is correct.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="extension-mechanism">
+<section id="section-6">
+      <h2 id="name-extension-mechanism">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-extension-mechanism" class="section-name selfRef">Extension Mechanism</a>
+      </h2>
+<p id="section-6-1">Any column in the column header that is not a common field
+(<a href="#common-fields" class="auto internal xref">Section 4</a>) is a <strong>custom extension field</strong>. Consumers <span class="bcp14">MUST</span>
+silently ignore columns they do not recognize. This ensures forward
+compatibility --- producers can add new columns without breaking existing
+consumers.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="declaring-extension-fields">
+<section id="section-6.1">
+        <h3 id="name-declaring-extension-fields">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-declaring-extension-fields" class="section-name selfRef">Declaring Extension Fields</a>
+        </h3>
+<p id="section-6.1-1">Extension fields are declared simply by including them in the column
+header. No registration or coordination is required. The following
+examples show column headers and data rows only (the metadata line is
+omitted for brevity):<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-6.1-2">
+<pre>
+network,country,city,cloud_region,cloud_service
+198.51.100.0/24,US,Sometown,region-east-1,compute
+</pre><a href="#section-6.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="naming-conventions">
+<section id="section-6.2">
+        <h3 id="name-naming-conventions">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-naming-conventions" class="section-name selfRef">Naming Conventions</a>
+        </h3>
+<p id="section-6.2-1">Extension field names <span class="bcp14">SHOULD</span>:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-2.1">
+            <p id="section-6.2-2.1.1">Use lowercase letters, digits, and underscores<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.2-2.2">
+            <p id="section-6.2-2.2.1">Follow the type conventions in <a href="#column-naming-conventions" class="auto internal xref">Section 4.6</a>
+(<code>is_*</code> for booleans, <code>*_value</code> for numbers)<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.2-2.3">
+            <p id="section-6.2-2.3.1">Be descriptive enough that their purpose is clear without external
+documentation<a href="#section-6.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="examples-1">
+<section id="section-6.3">
+        <h3 id="name-examples-2">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-examples-2" class="section-name selfRef">Examples</a>
+        </h3>
+<p id="section-6.3-1"><strong>Cloud provider publishing region metadata:</strong><a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-6.3-2">
+<pre>
+network,country,connection_type,organization,cloud_region,cloud_service
+198.51.100.0/24,US,hosting,Example Cloud,region-east-1,compute
+198.51.101.0/24,KR,hosting,Example Cloud,region-apac-3,compute
+</pre><a href="#section-6.3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-6.3-3"><strong>ISP publishing internal network identifiers:</strong><a href="#section-6.3-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-6.3-4">
+<pre>
+network,country,connection_type,user_type,isp,internal_node_id,speed_tier
+203.0.113.0/24,US,,residential,Example Cable,DAL-42,gigabit
+</pre><a href="#section-6.3-4" class="pilcrow">¶</a>
+</div>
+<p id="section-6.3-5">If a custom field becomes widely used across multiple producers, it <span class="bcp14">MAY</span>
+be proposed for inclusion in the common field set in a future version of
+this specification.<a href="#section-6.3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="geofeed-conversion">
+<section id="section-7">
+      <h2 id="name-geofeed-conversion">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-geofeed-conversion" class="section-name selfRef">Geofeed Conversion</a>
+      </h2>
+<p id="section-7-1">An RFC 8805 geofeed <span>[<a href="#RFC8805" class="cite xref">RFC8805</a>]</span> can be upgraded to ipfeed with minimal
+changes:<a href="#section-7-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-7-2">
+<li id="section-7-2.1">
+          <p id="section-7-2.1.1"><strong>Prepend a metadata line</strong> with at least <code>ipfeed_version=1</code>.<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-7-2.2">
+          <p id="section-7-2.2.1"><strong>Add a column header</strong>: <code>network,country,region,city,postal_code</code><a href="#section-7-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-7-2.3">
+          <p id="section-7-2.3.1"><strong>Existing data rows work as-is.</strong> The five geofeed columns map
+directly to ipfeed columns.<a href="#section-7-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-7-3">Note that <code>postal_code</code> is not a common ipfeed field but is preserved
+during conversion to avoid data loss. Consumers that do not recognize
+<code>postal_code</code> will silently ignore it.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<div id="field-mapping">
+<section id="section-7.1">
+        <h3 id="name-field-mapping">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-field-mapping" class="section-name selfRef">Field Mapping</a>
+        </h3>
+<table class="center" id="table-10">
+          <caption><a href="#table-10" class="selfRef">Table 10</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Geofeed column (position)</th>
+              <th class="text-left" rowspan="1" colspan="1">ipfeed column</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">1 (IP prefix)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>network</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">2 (Country)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>country</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">3 (Region)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>region</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">4 (City)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>city</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">5 (Postal code)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>postal_code</code>
+</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="conversion-rules">
+<section id="section-7.2">
+        <h3 id="name-conversion-rules">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-conversion-rules" class="section-name selfRef">Conversion Rules</a>
+        </h3>
+<ol start="1" type="1" class="normal type-1" id="section-7.2-1">
+<li id="section-7.2-1.1">
+            <p id="section-7.2-1.1.1">Each non-comment, non-empty geofeed line becomes one data row.<a href="#section-7.2-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-1.2">
+            <p id="section-7.2-1.2.1">Empty geofeed fields become empty ipfeed fields (not <code>\N</code>), because a
+geofeed producer has not positively asserted "no value" --- they
+simply did not provide data.<a href="#section-7.2-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-1.3">
+            <p id="section-7.2-1.3.1">Comment lines (<code>#</code>) are discarded. Relevant metadata (publisher info,
+contact_email, URL) <span class="bcp14">SHOULD</span> be placed in the metadata line.<a href="#section-7.2-1.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.2-1.4">
+            <p id="section-7.2-1.4.1">Geofeed <code># entry</code> RPKI signature lines are discarded during
+conversion.<a href="#section-7.2-1.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="example">
+<section id="section-7.3">
+        <h3 id="name-example">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-example" class="section-name selfRef">Example</a>
+        </h3>
+<p id="section-7.3-1"><strong>Original geofeed:</strong><a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.3-2">
+<pre>
+# Geofeed for AS64496
+203.0.113.0/24,NZ,,Auckland,
+203.0.114.0/24,NZ,,Wellington,6011
+</pre><a href="#section-7.3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-7.3-3"><strong>Converted ipfeed:</strong><a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.3-4">
+<pre>
+# ipfeed_version=1; publisher=AS64496
+network,country,region,city,postal_code
+203.0.113.0/24,NZ,,Auckland,
+203.0.114.0/24,NZ,,Wellington,6011
+</pre><a href="#section-7.3-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="publication-and-discovery">
+<section id="section-8">
+      <h2 id="name-publication-and-discovery">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-publication-and-discovery" class="section-name selfRef">Publication and Discovery</a>
+      </h2>
+<div id="file-extension">
+<section id="section-8.1">
+        <h3 id="name-file-extension">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-file-extension" class="section-name selfRef">File Extension</a>
+        </h3>
+<p id="section-8.1-1">The <span class="bcp14">RECOMMENDED</span> file extension for ipfeed files is <code>.csv</code>. Where it is
+useful to distinguish ipfeed files from generic CSV files (for example, in
+a directory of mixed-purpose files), the extension <code>.ipfeed</code> <span class="bcp14">MAY</span> be used.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-2">The metadata line (<a href="#metadata-line" class="auto internal xref">Section 3.3</a>) is the authoritative indicator that
+a file is an ipfeed. Consumers <span class="bcp14">MUST NOT</span> rely on the file extension alone
+to identify an ipfeed file.<a href="#section-8.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="media-type">
+<section id="section-8.2">
+        <h3 id="name-media-type">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-media-type" class="section-name selfRef">Media Type</a>
+        </h3>
+<p id="section-8.2-1">The <span class="bcp14">RECOMMENDED</span> media type for ipfeed files is <code>text/csv</code> per <span>[<a href="#RFC4180" class="cite xref">RFC4180</a>]</span>.
+ipfeed does not register a distinct media type; the metadata line on the
+first line of the file is sufficient for consumers to recognize the
+format.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2">When ipfeed files are served over HTTP, producers <span class="bcp14">SHOULD</span> set the
+<code>Content-Type</code> header to <code>text/csv; charset=utf-8</code>.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="discovery">
+<section id="section-8.3">
+        <h3 id="name-discovery">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-discovery" class="section-name selfRef">Discovery</a>
+        </h3>
+<p id="section-8.3-1">Producers <span class="bcp14">SHOULD</span> make their ipfeed file discoverable using the same
+mechanism defined for RFC 8805 geofeeds in <span>[<a href="#RFC9632" class="cite xref">RFC9632</a>]</span>: a <code>geofeed:</code>
+attribute on the relevant <code>inetnum:</code> or <code>inet6num:</code> object in the RPSL
+records of a Regional Internet Registry, whose value is the HTTPS URL of
+the file.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<p id="section-8.3-2">Consumers that follow a <code>geofeed:</code> reference <span class="bcp14">SHOULD</span> detect the ipfeed
+metadata line (<a href="#metadata-line" class="auto internal xref">Section 3.3</a>) and process the file as an ipfeed if
+the line is present, falling back to RFC 8805 parsing otherwise.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
+<p id="section-8.3-3">Discovery mechanisms beyond RFC 9632 (for example, well-known URIs,
+DNS-based pointers, or RDAP extensions) are out of scope for this
+document.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="operational-considerations">
+<section id="section-9">
+      <h2 id="name-operational-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-operational-considerations" class="section-name selfRef">Operational Considerations</a>
+      </h2>
+<p id="section-9-1">This section gives non-normative guidance for producers and consumers
+deploying ipfeed in practice.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<div id="file-size">
+<section id="section-9.1">
+        <h3 id="name-file-size">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-file-size" class="section-name selfRef">File Size</a>
+        </h3>
+<p id="section-9.1-1">ipfeed files describe a producer's address space at row-level
+granularity, so file size grows with the number of distinct prefixes
+and the number of populated columns. Producers <span class="bcp14">SHOULD</span> aim for files
+small enough to be retrieved and parsed in a single HTTP exchange
+without special tooling. As a soft target, files up to a few megabytes
+are easily handled by typical consumers; files in the tens of
+megabytes start to force consumers into streaming or chunked
+processing and <span class="bcp14">SHOULD</span> be split or summarized where possible.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<p id="section-9.1-2">When a producer's data is too large for a single file, producers <span class="bcp14">MAY</span>
+publish multiple ipfeed files (for example, partitioned by region or
+ASN). Cross-file consistency, partitioning conventions, and
+manifest/index mechanisms are out of scope for this document.<a href="#section-9.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="refresh-cadence">
+<section id="section-9.2">
+        <h3 id="name-refresh-cadence">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-refresh-cadence" class="section-name selfRef">Refresh Cadence</a>
+        </h3>
+<p id="section-9.2-1">ipfeed publishes a producer's current view of their address space at
+the moment the file was generated. The appropriate refresh cadence is
+a producer choice driven by how quickly their underlying data changes;
+there is no normative minimum or maximum.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-2">Producers <span class="bcp14">SHOULD</span> regenerate and republish on a regular schedule even
+when row data has not changed, so that consumers can distinguish
+"actively maintained, no recent changes" from "abandoned." The
+<code>generated</code> field (<a href="#generated-semantics" class="auto internal xref">Section 3.3.4</a>) carries the
+last-regeneration timestamp.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+<p id="section-9.2-3">Consumers <span class="bcp14">SHOULD NOT</span> poll faster than once per hour without prior
+arrangement with the producer. Consumers <span class="bcp14">SHOULD</span> use HTTP conditional
+requests (see <a href="#http-caching" class="auto internal xref">Section 9.3</a>) to avoid redundant transfers when the
+file has not changed.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="http-caching">
+<section id="section-9.3">
+        <h3 id="name-http-caching">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-http-caching" class="section-name selfRef">HTTP Caching</a>
+        </h3>
+<p id="section-9.3-1">When ipfeed files are served over HTTP, both producers and consumers
+<span class="bcp14">SHOULD</span> use standard HTTP cache controls to minimize transfer cost.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+<p id="section-9.3-2">Producers <span class="bcp14">SHOULD</span>:<a href="#section-9.3-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9.3-3.1">
+            <p id="section-9.3-3.1.1">Set a <code>Last-Modified</code> response header reflecting the file's
+<code>generated</code> time (or the underlying file modification time if it is
+later).<a href="#section-9.3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.3-3.2">
+            <p id="section-9.3-3.2.1">Set a strong <code>ETag</code> derived from the file's content, so that
+unchanged regenerations of identical content return <code>304 Not
+Modified</code> on conditional fetches.<a href="#section-9.3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.3-3.3">
+            <p id="section-9.3-3.3.1">Set a <code>Cache-Control</code> header consistent with the producer's refresh
+cadence (for example, <code>Cache-Control: max-age=3600</code> for an hourly
+feed).<a href="#section-9.3-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-9.3-4">Consumers <span class="bcp14">SHOULD</span>:<a href="#section-9.3-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9.3-5.1">
+            <p id="section-9.3-5.1.1">Cache the most recent successful response and issue conditional
+requests using <code>If-Modified-Since</code> and <code>If-None-Match</code> on subsequent
+fetches.<a href="#section-9.3-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.3-5.2">
+            <p id="section-9.3-5.2.1">Respect the producer's <code>Cache-Control</code> directives as a lower bound
+on poll interval.<a href="#section-9.3-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.3-5.3">
+            <p id="section-9.3-5.3.1">Treat a <code>304 Not Modified</code> response as "no change since last fetch,"
+not as evidence of file generation freshness; the <code>generated</code>
+timestamp inside the file remains the authoritative source.<a href="#section-9.3-5.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-10">
+      <h2 id="name-security-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-10-1">ipfeed files are self-published data. A producer can claim any metadata
+for any prefix, whether or not they are the legitimate operator of that
+address space. Consumers <span class="bcp14">SHOULD NOT</span> treat ipfeed data as authoritative
+without independent verification.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-2">Authentication and integrity mechanisms (such as RPKI-based signing or
+RDAP linkage) are expected to be addressed in a companion
+specification.<a href="#section-10-2" class="pilcrow">¶</a></p>
+<p id="section-10-3">Consumers processing ipfeed files from untrusted sources <span class="bcp14">SHOULD</span>:<a href="#section-10-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10-4.1">
+          <p id="section-10-4.1.1">Validate that <code>network</code> values are well-formed CIDR notation.<a href="#section-10-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-4.2">
+          <p id="section-10-4.2.1">Reject records with prefixes outside publicly routable address space
+unless specifically intended for private use.<a href="#section-10-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-4.3">
+          <p id="section-10-4.3.1">Apply rate limiting and size limits to prevent resource exhaustion from
+excessively large feeds.<a href="#section-10-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-4.4">
+          <p id="section-10-4.4.1">Sanitize string field values before use in contexts where injection is
+possible (e.g., SQL queries, HTML rendering).<a href="#section-10-4.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<div id="transport">
+<section id="section-10.1">
+        <h3 id="name-transport">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-transport" class="section-name selfRef">Transport</a>
+        </h3>
+<p id="section-10.1-1">Producers <span class="bcp14">SHOULD</span> publish ipfeed files over HTTPS so that consumers can
+verify channel integrity and authenticate the publishing endpoint.
+Consumers <span class="bcp14">SHOULD</span> reject ipfeed URLs that resolve over plain HTTP except
+in test or private-use contexts where the channel is trusted by other
+means.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<p id="section-10.1-2">Producers <span class="bcp14">SHOULD</span> use stable URLs and avoid redirecting from <code>https://</code>
+to <code>http://</code>. Consumers <span class="bcp14">MUST NOT</span> follow such downgrades automatically.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-11">
+      <h2 id="name-iana-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-11-1">This document has no IANA actions.<a href="#section-11-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-12">
+      <h2 id="name-references">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-12.1">
+        <h3 id="name-normative-references">
+<a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC4180">[RFC4180]</dt>
+        <dd>
+<span class="refAuthor">Shafranovich, Y.</span>, <span class="refTitle">"Common Format and MIME Type for Comma-Separated Values (CSV) Files"</span>, <span class="seriesInfo">RFC 4180</span>, <span class="seriesInfo">DOI 10.17487/RFC4180</span>, <time datetime="2005-10" class="refDate">October 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4180">https://www.rfc-editor.org/rfc/rfc4180</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9632">[RFC9632]</dt>
+      <dd>
+<span class="refAuthor">Bush, R.</span>, <span class="refAuthor">Candela, M.</span>, <span class="refAuthor">Kumari, W.</span>, and <span class="refAuthor">R. Housley</span>, <span class="refTitle">"Finding and Using Geofeed Data"</span>, <span class="seriesInfo">RFC 9632</span>, <span class="seriesInfo">DOI 10.17487/RFC9632</span>, <time datetime="2024-08" class="refDate">August 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9632">https://www.rfc-editor.org/rfc/rfc9632</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-12.2">
+        <h3 id="name-informative-references">
+<a href="#section-12.2" class="section-number selfRef">12.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="I-D.ietf-opsawg-prefix-lengths">[I-D.ietf-opsawg-prefix-lengths]</dt>
+        <dd>
+<span class="refAuthor">Gasser, O.</span>, <span class="refAuthor">Bush, R.</span>, <span class="refAuthor">Candela, M.</span>, and <span class="refAuthor">R. Housley</span>, <span class="refTitle">"Publishing End-Site Prefix Lengths"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-opsawg-prefix-lengths-14</span>, <time datetime="2025-12-17" class="refDate">17 December 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-opsawg-prefix-lengths-14">https://datatracker.ietf.org/doc/html/draft-ietf-opsawg-prefix-lengths-14</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6888">[RFC6888]</dt>
+        <dd>
+<span class="refAuthor">Perreault, S., Ed.</span>, <span class="refAuthor">Yamagata, I.</span>, <span class="refAuthor">Miyakawa, S.</span>, <span class="refAuthor">Nakagawa, A.</span>, and <span class="refAuthor">H. Ashida</span>, <span class="refTitle">"Common Requirements for Carrier-Grade NATs (CGNs)"</span>, <span class="seriesInfo">BCP 127</span>, <span class="seriesInfo">RFC 6888</span>, <span class="seriesInfo">DOI 10.17487/RFC6888</span>, <time datetime="2013-04" class="refDate">April 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6888">https://www.rfc-editor.org/rfc/rfc6888</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8805">[RFC8805]</dt>
+      <dd>
+<span class="refAuthor">Kline, E.</span>, <span class="refAuthor">Duleba, K.</span>, <span class="refAuthor">Szamonek, Z.</span>, <span class="refAuthor">Moser, S.</span>, and <span class="refAuthor">W. Kumari</span>, <span class="refTitle">"A Format for Self-Published IP Geolocation Feeds"</span>, <span class="seriesInfo">RFC 8805</span>, <span class="seriesInfo">DOI 10.17487/RFC8805</span>, <time datetime="2020-08" class="refDate">August 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8805">https://www.rfc-editor.org/rfc/rfc8805</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="examples-2">
+<section id="appendix-A">
+      <h2 id="name-examples-3">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-examples-3" class="section-name selfRef">Examples</a>
+      </h2>
+<div id="minimal-feed">
+<section id="appendix-A.1">
+        <h3 id="name-minimal-feed">
+<a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-minimal-feed" class="section-name selfRef">Minimal Feed</a>
+        </h3>
+<p id="appendix-A.1-1">A simple feed with only location data:<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-A.1-2">
+<pre>
+# ipfeed_version=1; publisher=AS64496; publisher_name=Example ISP
+network,country,city
+203.0.113.0/24,NZ,Auckland
+203.0.114.0/24,NZ,Wellington
+</pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cloud-provider-feed">
+<section id="appendix-A.2">
+        <h3 id="name-cloud-provider-feed">
+<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-cloud-provider-feed" class="section-name selfRef">Cloud Provider Feed</a>
+        </h3>
+<p id="appendix-A.2-1">A cloud provider publishing region-level metadata with custom extension
+fields:<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-A.2-2">
+<pre>
+# ipfeed_version=1; publisher=AS64498; publisher_name=Example Cloud; generated=2026-02-11T00:00:00Z; contact_email=noc@cloud.example.com
+network,country,region,city,connection_type,user_type,organization,is_anycast,cloud_region,cloud_service
+192.0.2.0/24,US,US-IA,Sometown,,hosting,Example Cloud,,region-east-1,compute
+192.0.2.128/25,KR,KR-28,Somecity,,hosting,Example Cloud,,region-apac-3,compute
+198.51.100.0/24,SG,,,,,Example Cloud,true,region-apac-1,compute
+</pre><a href="#appendix-A.2-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="isp-with-connection-type-and-user-type">
+<section id="appendix-A.3">
+        <h3 id="name-isp-with-connection-type-an">
+<a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-isp-with-connection-type-an" class="section-name selfRef">ISP with Connection Type and User Type</a>
+        </h3>
+<p id="appendix-A.3-1">An ISP publishing both physical connection technology and logical network
+usage:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-A.3-2">
+<pre>
+# ipfeed_version=1; publisher=AS64499; publisher_name=Example Cable ISP; contact_email=geofeeds@isp.example.com
+network,country,region,city,user_type,connection_type,isp,confidence_value
+203.0.113.0/24,US,,,residential,cable_dsl,Example Cable,90
+203.0.113.128/25,US,US-OR,Sometown,residential,cable_dsl,Example Cable,
+203.0.113.192/26,US,US-CA,,residential,cable_dsl,Example Cable,85
+</pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="enterprise-network">
+<section id="appendix-A.4">
+        <h3 id="name-enterprise-network">
+<a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-enterprise-network" class="section-name selfRef">Enterprise Network</a>
+        </h3>
+<p id="appendix-A.4-1">An enterprise publishing internal network structure with extension
+fields:<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-A.4-2">
+<pre>
+# ipfeed_version=1; publisher=Example University; generated=2026-01-15T12:00:00Z
+network,country,region,city,user_type,organization,is_proxy,department
+192.0.2.0/24,US,US-MA,Cambridge,education,Example University,,Computer Science
+192.0.2.128/25,US,US-MA,Cambridge,education,Example University,false,Library
+</pre><a href="#appendix-A.4-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="retraction-usage">
+<section id="appendix-A.5">
+        <h3 id="name-retraction-usage">
+<a href="#appendix-A.5" class="section-number selfRef">A.5. </a><a href="#name-retraction-usage" class="section-name selfRef">Retraction Usage</a>
+        </h3>
+<p id="appendix-A.5-1">A satellite ISP that knows country and connection type but asserts that
+city data should be discarded:<a href="#appendix-A.5-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-A.5-2">
+<pre>
+# ipfeed_version=1; publisher=AS64497; publisher_name=Example Satellite
+network,country,region,city,user_type,connection_type
+198.51.100.0/24,US,US-WY,\N,satellite,satellite
+198.51.101.0/24,US,\N,\N,satellite,satellite
+198.51.102.0/24,AU,,,satellite,satellite
+</pre><a href="#appendix-A.5-2" class="pilcrow">¶</a>
+</div>
+<ul class="normal">
+<li class="normal" id="appendix-A.5-3.1">
+            <p id="appendix-A.5-3.1.1">Row 1: <code>city</code> is <code>\N</code> --- the producer asserts there is no meaningful
+city. Consumers should discard any city data they have for this
+prefix.<a href="#appendix-A.5-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.5-3.2">
+            <p id="appendix-A.5-3.2.1">Row 2: Both <code>region</code> and <code>city</code> are <code>\N</code> --- the producer asserts
+that neither region nor city is meaningful for this mobile satellite
+prefix.<a href="#appendix-A.5-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.5-3.3">
+            <p id="appendix-A.5-3.3.1">Row 3: <code>region</code> and <code>city</code> are empty --- the producer simply doesn't
+have this data. Consumers may use other sources.<a href="#appendix-A.5-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-B">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-B-1">The authors would like to thank the contributors to RFC 8805 whose work
+on geofeeds provided the foundation for this specification.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Kevin Phair</span></div>
+<div dir="auto" class="left"><span class="org">MaxMind</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:kphair@maxmind.com" class="email">kphair@maxmind.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
